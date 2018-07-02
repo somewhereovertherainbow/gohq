@@ -1,7 +1,7 @@
 <p align="center">
-  <img src="https://upload.wikimedia.org/wikipedia/en/thumb/0/0b/HQ_app_logo.jpg/220px-HQ_app_logo.jpg" alt="" width=172 height=172>
+  <img src="https://upload.wikimedia.org/wikipedia/en/thumb/a/ae/HQ_app_logo.png/220px-HQ_app_logo.png" alt="" width=172 height=172>
 
-  <h3 align="center">Go HQTrivia</h3>
+  <h3 align="center">Go HQ</h3>
 
   <p align="center">
     featuring a fully featured api for accessing and interacting with the <a href="https://hq.hype.space/legal/rules.html">HQ</a> API.
