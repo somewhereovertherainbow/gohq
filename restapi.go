@@ -8,6 +8,8 @@ import (
 	"io/ioutil"
 	"errors"
 	"strconv"
+	"github.com/smartystreets/go-aws-auth"
+	"net/url"
 )
 
 // Request makes (GET/POST/PUT/PATCH/etc..) requests to the HQ API
@@ -64,6 +66,62 @@ func (a *Account) Request(method string, urlStr string, data interface{}, auth b
 
 	// TODO: Add a check to see if HQ ever goes down
 
+	return
+}
+
+// Verify a phone number via (SMS or CALL?)
+func Verify(number, method string) (verification *Verification, err error) {
+	type Data struct {
+		Method string `json:"method"`
+		Phone  string `json:"phone"`
+	}
+
+	a := Account{}
+	resp, err := a.Request("POST", EndpointVerifications, Data{Method: method, Phone: number}, false)
+
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal(resp, &verification)
+	return
+}
+
+// Confirm a verification session
+func (v *Verification) Confirm(code string) (auth *Auth, err error) {
+	type Data struct {
+		Code string `json:"code"`
+	}
+
+	a := Account{}
+	resp, err := a.Request("POST", EndpointVerifications+v.VerificationID, Data{Code: code}, false)
+
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal(resp, &auth)
+	return
+}
+
+// Create an account if user Confirm().auth == nil (account doesn't exist)
+func (v *Verification) Create(username, referrer, region string) (account *Account, err error) {
+	type Data struct {
+		Country           string `json:"country"`
+		Language          string `json:"language"`
+		ReferringUsername string `json:"referringUsername"`
+		Username          string `json:"username"`
+		VerificationID    string `json:"verificationId"`
+	}
+
+	a := Account{}
+	resp, err := a.Request("POST", EndpointVerifications+v.VerificationID, Data{Country: region, VerificationID: v.VerificationID, Username: username, Language: "en", ReferringUsername: referrer}, false)
+
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal(resp, &account)
 	return
 }
 
@@ -129,6 +187,21 @@ func (a *Account) Payouts() (pd *PayoutData, err error) {
 	return
 }
 
+// Schedule
+func (a *Account) Schedule() (sd *ScheduleData, err error) {
+	type Data struct {
+	}
+
+	resp, err := a.Request("GET", EndpointSchedule, Data{}, true)
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal(resp, &sd)
+
+	return
+}
+
 // Weekly runs the makeItRain easter egg
 func (a *Account) Weekly() (err error) {
 	type Data struct {
@@ -153,5 +226,67 @@ func (a *Account) SearchUser(username string) (sd *SearchData, err error) {
 
 	err = json.Unmarshal(resp, &sd)
 
+	return
+}
+
+// AddFriend adds a user by id
+func (a *Account) AddFriend(uID string) (err error) {
+	type Data struct {
+	}
+
+	_, err = a.Request("POST", EndpointFriendRequest(uID), Data{}, true)
+	return
+}
+
+// DeleteFriend removes a user from your friend list
+func (a *Account) DeleteFriend(uID string) (err error) {
+	type Data struct {
+	}
+
+	_, err = a.Request("DELETE", EndpointFriendRequest(uID), Data{}, true)
+	return
+}
+
+// Request an AWS session
+func (a *Account) RequestAWS() (aws *AWSSession, err error) {
+	type Data struct {
+	}
+
+	resp, err := a.Request("GET", EndpointAWS, Data{}, true)
+
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal(resp, aws)
+	return
+}
+
+// Upload to AWS
+func (aws *AWSSession) Upload(filename string, data []byte) (err error) {
+	req, _ := http.NewRequest("PUT", "https://hypespace-quiz.s3.amazonaws.com/avatars/"+url.QueryEscape(filename), bytes.NewReader(data))
+	req.Header.Add("Content-Type", "image/jpeg")
+	req.Header.Add("Host", "hypespace-quiz.s3.amazonaws.com")
+
+	awsauth.Sign(req, awsauth.Credentials{Expiration: aws.Expiration, AccessKeyID: aws.AccessKeyID, SecretAccessKey: aws.SecretKey, SecurityToken: aws.SessionToken})
+
+	_, err = http.DefaultClient.Do(req)
+
+	return
+}
+
+// Change the profile picture to a profile picture on the AWS path
+func (a *Account) ChangeAvatar(awsPath string) (result *AvatarChange, err error) {
+	type Data struct {
+		AvatarURL string `json:"avatarUrl"`
+	}
+
+	resp, err := a.Request("PUT", EndpointAvatarURL, Data{AvatarURL: awsPath}, true)
+
+	if err != nil {
+		return
+	}
+
+	err = json.Unmarshal(resp, &result)
 	return
 }

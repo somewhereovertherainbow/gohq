@@ -1,6 +1,9 @@
 package gohq
 
-import "time"
+import (
+	"time"
+	"github.com/gorilla/websocket"
+)
 
 // Account information
 type Account struct {
@@ -150,4 +153,191 @@ type SearchData struct {
 		Prev string      `json:"prev"`
 		Self string      `json:"self"`
 	} `json:"links"`
+}
+
+// ScheduleData contains information about the upcoming and ongoing HQ games
+type ScheduleData struct {
+	Active        bool      `json:"active"`
+	AtCapacity    bool      `json:"atCapacity"`
+	ShowID        int       `json:"showId"`
+	ShowType      string    `json:"showType"`
+	StartTime     time.Time `json:"startTime"`
+	NextShowTime  time.Time `json:"nextShowTime"`
+	NextShowPrize string    `json:"nextShowPrize"`
+	Upcoming []struct {
+		Time  time.Time `json:"time"`
+		Prize string    `json:"prize"`
+	} `json:"upcoming"`
+	Prize int `json:"prize"`
+	Broadcast struct {
+		BroadcastID   int           `json:"broadcastId"`
+		UserID        int           `json:"userId"`
+		Title         string        `json:"title"`
+		Status        int           `json:"status"`
+		State         string        `json:"state"`
+		ChannelID     int           `json:"channelId"`
+		Created       time.Time     `json:"created"`
+		Started       time.Time     `json:"started"`
+		Ended         interface{}   `json:"ended"`
+		Permalink     string        `json:"permalink"`
+		ThumbnailData interface{}   `json:"thumbnailData"`
+		Tags          []interface{} `json:"tags"`
+		SocketURL     string        `json:"socketUrl"`
+		Streams struct {
+			Source      string `json:"source"`
+			Passthrough string `json:"passthrough"`
+			High        string `json:"high"`
+			Medium      string `json:"medium"`
+			Low         string `json:"low"`
+		} `json:"streams"`
+		StreamURL         string `json:"streamUrl"`
+		StreamKey         string `json:"streamKey"`
+		RelativeTimestamp int    `json:"relativeTimestamp"`
+		Links struct {
+			Self       string `json:"self"`
+			Transcript string `json:"transcript"`
+			Viewers    string `json:"viewers"`
+		} `json:"links"`
+	} `json:"broadcast"`
+	GameKey       string `json:"gameKey"`
+	BroadcastFull bool   `json:"broadcastFull"`
+}
+
+// Game is a type which contains information about websocket connections
+type Game struct {
+	Conn *websocket.Conn
+}
+
+// BroadcastStats gives you information about the current broadcast
+type BroadcastStats struct {
+	Type          string `json:"type"`
+	LikeCount     int    `json:"likeCount"`
+	StatusMessage string `json:"statusMessage"`
+	ViewerCounts struct {
+		Connected int `json:"connected"`
+		Playing   int `json:"playing"`
+		Watching  int `json:"watching"`
+	} `json:"viewerCounts"`
+	BroadcastSubscribers []interface{} `json:"broadcastSubscribers"`
+	Ts                   time.Time     `json:"ts"`
+	Sent                 time.Time     `json:"sent"`
+}
+
+// Question gives you information about a new question
+type Question struct {
+	Type        string `json:"type"`
+	TotalTimeMs int    `json:"totalTimeMs"`
+	TimeLeftMs  int    `json:"timeLeftMs"`
+	QuestionID  int    `json:"questionId"`
+	Question    string `json:"question"`
+	Category    string `json:"category"`
+	Answers []struct {
+		AnswerID int    `json:"answerId"`
+		Text     string `json:"text"`
+	} `json:"answers"`
+	QuestionNumber int       `json:"questionNumber"`
+	QuestionCount  int       `json:"questionCount"`
+	Ts             time.Time `json:"ts"`
+	Sent           time.Time `json:"sent"`
+}
+
+// QuestionSummary returns post question information
+type QuestionSummary struct {
+	AdvancingPlayersCount int `json:"advancingPlayersCount"`
+	AnswerCounts []struct {
+		Answer   string `json:"answer"`
+		AnswerID int    `json:"answerId"`
+		Correct  bool   `json:"correct"`
+		Count    int    `json:"count"`
+	} `json:"answerCounts"`
+	EliminatedPlayersCount int       `json:"eliminatedPlayersCount"`
+	ExtraLivesRemaining    int       `json:"extraLivesRemaining"`
+	ID                     string    `json:"id"`
+	Question               string    `json:"question"`
+	QuestionID             int       `json:"questionId"`
+	SavedByExtraLife       bool      `json:"savedByExtraLife"`
+	Sent                   time.Time `json:"sent"`
+	Ts                     time.Time `json:"ts"`
+	Type                   string    `json:"type"`
+	YouGotItRight          bool      `json:"youGotItRight"`
+	YourAnswerID           int       `json:"yourAnswerId"`
+}
+
+// QuestionClosed indicates a question is no longer able to be answered
+type QuestionClosed struct {
+	Type       string    `json:"type"`
+	QuestionID int       `json:"questionId"`
+	Ts         time.Time `json:"ts"`
+	Sent       time.Time `json:"sent"`
+}
+
+// Question finished indicates the question is now over
+type QuestionFinished struct {
+	Type       string    `json:"type"`
+	QuestionID int       `json:"questionId"`
+	Ts         time.Time `json:"ts"`
+	Sent       time.Time `json:"sent"`
+}
+
+// GameStatus indicates status information for the game
+type GameStatus struct {
+	CardPlaysRemaining  int         `json:"cardPlaysRemaining"`
+	Kind                string      `json:"kind"`
+	Prize               string      `json:"prize"`
+	InTheGame           bool        `json:"inTheGame"`
+	Type                string      `json:"type"`
+	QuestionCount       int         `json:"questionCount"`
+	ExtraLivesRemaining int         `json:"extraLivesRemaining"`
+	CurrentState        interface{} `json:"currentState"`
+	Cts                 time.Time   `json:"cts"`
+	QuestionNumber      int         `json:"questionNumber"`
+	ExtraLives          int         `json:"extraLives"`
+	Ts                  time.Time   `json:"ts"`
+	Sent                time.Time   `json:"sent"`
+}
+
+// ChatMessage shows chat messages sent by users
+type ChatMessage struct {
+	Type   string `json:"type"`
+	ItemID string `json:"itemId"`
+	UserID int    `json:"userId"`
+	Metadata struct {
+		UserID      int    `json:"userId"`
+		Message     string `json:"message"`
+		AvatarURL   string `json:"avatarUrl"`
+		Interaction string `json:"interaction"`
+		Username    string `json:"username"`
+	} `json:"metadata"`
+	Ts   time.Time `json:"ts"`
+	Sent time.Time `json:"sent"`
+}
+
+// Authentication information from logging in?
+type Auth struct {
+	Auth *Account `json:"auth,omitempty"`
+}
+
+// AWSSession gives information for uploading avatars
+type AWSSession struct {
+	AccessKeyID  string    `json:"accessKeyId"`
+	SecretKey    string    `json:"secretKey"`
+	SessionToken string    `json:"sessionToken"`
+	Expiration   time.Time `json:"expiration"`
+}
+
+// A verification session
+type Verification struct {
+	CallsEnabled   bool      `json:"callsEnabled"`
+	Expires        time.Time `json:"expires"`
+	Phone          string    `json:"phone"`
+	RetrySeconds   int       `json:"retrySeconds"`
+	VerificationID string    `json:"verificationId"`
+}
+
+// The result to an avatar change
+type AvatarChange struct {
+	UserID    int       `json:"userId"`
+	Username  string    `json:"username"`
+	AvatarURL string    `json:"avatarUrl"`
+	Created   time.Time `json:"created"`
 }

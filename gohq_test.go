@@ -19,12 +19,19 @@ func TestHQ(t *testing.T) {
 
 	fmt.Println("Lives: " + me.Lives)
 
-	users, err := account.SearchUser("Discoli")
+	users, err := account.SearchUser("Steve150")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	for _, u := range users.Data {
-		fmt.Println(u.Username)
+		fmt.Println(u.UserID)
 	}
+
+	schedule, err := account.Schedule()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(schedule.Upcoming)
 }
